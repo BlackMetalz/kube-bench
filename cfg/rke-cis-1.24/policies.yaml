@@ -303,18 +303,12 @@ groups:
       - id: 5.7.4
         text: "The default namespace should not be used (Automated)"
         audit: |
-          #!/bin/bash
-          set -eE
-          handle_error() {
+          count=$(kubectl get all -n default --no-headers | awk '{print $1}' | grep -v "service/kubernetes" | wc -l || true)
+          if [ "$count" -gt 0 ]; then
               echo "false"
-          }
-          trap 'handle_error' ERR
-          count=$(kubectl get all -n default -o json | jq .items[] | jq -r 'select((.metadata.name!="kubernetes"))' | jq .metadata.name | wc -l)
-          if [[ ${count} -gt 0 ]]; then
-              echo "false"
-              exit
+          else
+              echo "true"
           fi
-          echo "true"
         tests:
           bin_op: or
           test_items:
